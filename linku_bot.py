@@ -117,39 +117,36 @@ class PollBot:
                 "chat_id": query.message.chat_id,
             }
 
-        match command:
-            case InlineCommands.EXPAND:
-                arguments = arg_string.split(':', 1)
-                context.bot.edit_message_text(
-                    **identifier,
-                    text=self._get_definition_for_user(self.jasima.get_word_entry(arguments[0]), arguments[1], expand=True),
-                    parse_mode="Markdown",
-                    reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton(
-                        "show less",
-                        callback_data="{}:{}:{}".format(InlineCommands.CONTRACT, arguments[0], arguments[1])
-                    )]])
-                )
-            case InlineCommands.CONTRACT:
-                arguments = arg_string.split(':', 1)
-                context.bot.edit_message_text(
-                    **identifier,
-                    text=self._get_definition_for_user(self.jasima.get_word_entry(arguments[0]), arguments[1], expand=False),
-                    parse_mode="Markdown",
-                    reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton(
-                        "show more",
-                        callback_data="{}:{}:{}".format(InlineCommands.EXPAND, arguments[0], arguments[1])
-                    )]])
-                )
-            case InlineCommands.SETLANGUAGE:
-                self._set_user_language(parts[1], query.from_user.id)
-                settings = self._get_user_settings(query.from_user.id)
-                context.bot.edit_message_text(
-                    **identifier,
-                    text=messages.preferences_language_success.format(language=self.jasima.languages[settings.get('language', 'en')]['name_endonym']),
-                    parse_mode="Markdown",
-                )
-            case _:
-                pass
+        if command == InlineCommands.EXPAND:
+            arguments = arg_string.split(':', 1)
+            context.bot.edit_message_text(
+                **identifier,
+                text=self._get_definition_for_user(self.jasima.get_word_entry(arguments[0]), arguments[1], expand=True),
+                parse_mode="Markdown",
+                reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton(
+                    "show less",
+                    callback_data="{}:{}:{}".format(InlineCommands.CONTRACT, arguments[0], arguments[1])
+                )]])
+            )
+        if command == InlineCommands.CONTRACT:
+            arguments = arg_string.split(':', 1)
+            context.bot.edit_message_text(
+                **identifier,
+                text=self._get_definition_for_user(self.jasima.get_word_entry(arguments[0]), arguments[1], expand=False),
+                parse_mode="Markdown",
+                reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton(
+                    "show more",
+                    callback_data="{}:{}:{}".format(InlineCommands.EXPAND, arguments[0], arguments[1])
+                )]])
+            )
+        if command == InlineCommands.SETLANGUAGE:
+            self._set_user_language(parts[1], query.from_user.id)
+            settings = self._get_user_settings(query.from_user.id)
+            context.bot.edit_message_text(
+                **identifier,
+                text=messages.preferences_language_success.format(language=self.jasima.languages[settings.get('language', 'en')]['name_endonym']),
+                parse_mode="Markdown",
+            )
 
         query.answer("Done!")
 
