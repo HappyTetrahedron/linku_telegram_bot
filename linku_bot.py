@@ -154,6 +154,10 @@ class PollBot:
         print(self.me)
         update.message.reply_text(messages.help_text.format(botname=self.me['username']), parse_mode="Markdown")
 
+    def handle_about(self, update, context):
+        print(self.me)
+        update.message.reply_text(messages.about, parse_mode="MarkdownV2")
+
     # Error handler
     def handle_error(self, update, context):
         """Log Errors caused by Updates."""
@@ -232,6 +236,7 @@ class PollBot:
         # on different commands - answer in Telegram
         dp.add_handler(CommandHandler("start", self.start))
         dp.add_handler(CommandHandler("help", self.handle_help))
+        dp.add_handler(CommandHandler("about", self.handle_about))
         dp.add_handler(CommandHandler("n", self.handle_nimi))
         dp.add_handler(CommandHandler("nimi", self.handle_nimi))
         dp.add_handler(CommandHandler("language", self.handle_language))

@@ -30,3 +30,12 @@ toki pi kon nimi taso li kama ante tan ni.
 
 Your language has been set to {language}.
 Only the language of the word definitions is affected."""
+about = """*ilo Linku \- Linku Telegram Bot*
+by jan Alin
+
+For questions, issues or contributions see:
+[GitHub](https://github.com/Jereviendrai/linku_telegram_bot)
+
+Linku Telegram Bot is licensed under the GNU General Public License Version 3\.
+The creator of this bot is not directly affiliated with the maintainers of lipu Linku\.
+"""
