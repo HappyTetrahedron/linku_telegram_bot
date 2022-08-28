@@ -51,10 +51,9 @@ class PollBot:
         command = update.message.text
         parts = command.split()
         nimi = parts[1].lower()
-        result = self.jasima.get_word_entry(nimi)
 
         update.message.reply_text(
-            text=self._get_definition_for_user(result, update.message.from_user.id),
+            text=self._get_definition_for_user(nimi, update.message.from_user.id),
             parse_mode="Markdown",
             reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("show more", callback_data="{}:{}:{}".format(InlineCommands.EXPAND, nimi, update.message.from_user.id))]])
         )
@@ -88,7 +87,7 @@ class PollBot:
                     input_message_content=InputTextMessageContent(
                         parse_mode='Markdown',
                         message_text=self._get_definition_for_user(
-                            results[word],
+                            word,
                             update.inline_query.from_user.id
                         ),
                     ),
@@ -121,7 +120,7 @@ class PollBot:
             arguments = arg_string.split(':', 1)
             context.bot.edit_message_text(
                 **identifier,
-                text=self._get_definition_for_user(self.jasima.get_word_entry(arguments[0]), arguments[1], expand=True),
+                text=self._get_definition_for_user(arguments[0], arguments[1], expand=True),
                 parse_mode="Markdown",
                 reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton(
                     "show less",
@@ -132,7 +131,7 @@ class PollBot:
             arguments = arg_string.split(':', 1)
             context.bot.edit_message_text(
                 **identifier,
-                text=self._get_definition_for_user(self.jasima.get_word_entry(arguments[0]), arguments[1], expand=False),
+                text=self._get_definition_for_user(arguments[0], arguments[1], expand=False),
                 parse_mode="Markdown",
                 reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton(
                     "show more",
@@ -164,7 +163,10 @@ class PollBot:
             traceback.print_exception(context.error)
 
     # Helper methods
-    def _get_definition_for_user(self, definition, user_id, expand=False):
+    def _get_definition_for_user(self, word, user_id, expand=False):
+        definition = self.jasima.get_word_entry(word)
+        if not definition:
+            return messages.definition_not_found.format(word=word)
         settings = self._get_user_settings(user_id)
         lang = settings.get('language', 'en')
         if expand:

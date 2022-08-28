@@ -1,6 +1,8 @@
 hello = """toki! mi ken pana e kon nimi pi toki pona tawa sina.
 
-Hello! I can give you the definitions of toki pona words."""
+Hello! I can give you the definitions of toki pona words.
+
+`/n [nimi]`"""
 help_text = """toki! mi ken pana e kon nimi pi toki pona tawa sina.
 o sitelen e ni tawa mi: `/n [nimi]`
 anu la, o sitelen e ni lon tomo toki ante: `@{botname} [nimi]`
@@ -13,6 +15,10 @@ You can also change the language of the definitions using /language"""
 definition_compact = '*{word}* ({book})\n\n{definition}'
 definition_extended = '*{word}*{body}'
 definition_extended_entry = '\n\n*{property}*:\n{value}'
+definition_not_found = """*{word}*
+pakala! mi sona ala e nimi ni.
+Unfortunately I couldn't find a definition for this word.
+"""
 preferences_main = "This is where you set your preferences."
 preferences_language = """o anu e toki sina. tenpo ni la, toki sina li toki {language}.
 toki pi kon nimi taso li kama ante tan ni.
