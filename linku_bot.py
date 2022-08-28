@@ -3,9 +3,11 @@
 import logging
 
 import dataset
+import telegram
 import yaml
 from telegram import InlineKeyboardButton
-from telegram.ext import Updater, CommandHandler, CallbackQueryHandler
+from telegram.constants import CHAT_PRIVATE
+from telegram.ext import Updater, CommandHandler, CallbackQueryHandler, MessageHandler
 from telegram.ext.inlinequeryhandler import InlineQueryHandler
 from telegram.inline.inlinekeyboardmarkup import InlineKeyboardMarkup
 from telegram.inline.inlinequeryresultarticle import InlineQueryResultArticle
@@ -98,6 +100,17 @@ class PollBot:
                 ),
             )
         update.inline_query.answer(inline_results)
+
+    # Message handler
+    def handle_message(self, update, context):
+        if update.message.chat.type == CHAT_PRIVATE:
+            nimi = update.message.text.lower()
+            if self.jasima.get_word_entry(nimi):
+                update.message.reply_text(
+                    text=self._get_definition_for_user(nimi, update.message.from_user.id),
+                    parse_mode="Markdown",
+                    reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("show more", callback_data="{}:{}:{}".format(InlineCommands.EXPAND, nimi, update.message.from_user.id))]])
+                )
 
     # Inline button press handler
     def handle_button(self, update, context):
@@ -241,6 +254,9 @@ class PollBot:
         dp.add_handler(CommandHandler("nimi", self.handle_nimi))
         dp.add_handler(CommandHandler("language", self.handle_language))
         dp.add_handler(CommandHandler("toki", self.handle_language))
+        dp.add_handler(MessageHandler(None, self.handle_message)
+
+                       )
 
         # Inline queries
         dp.add_handler(InlineQueryHandler(self.handle_inline_query))
