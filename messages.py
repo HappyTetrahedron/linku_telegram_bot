@@ -20,12 +20,12 @@ pakala! mi sona ala e nimi ni.
 Unfortunately I couldn't find a definition for this word.
 """
 preferences_main = "This is where you set your preferences."
-preferences_language = """o anu e toki sina. tenpo ni la, toki sina li toki {language}.
+preferences_language = """o anu e toki sina. tenpo ni la, toki sina li toki {language_tp}.
 toki pi kon nimi taso li kama ante tan ni.
 
 This is where you set your language. Your current choice is {language}.
 Only the language of the word definitions is changed."""
-preferences_language_success = """pona a! tenpo ni la, toki sina li toki {language}.
+preferences_language_success = """pona a! tenpo ni la, toki sina li toki {language_tp}.
 toki pi kon nimi taso li kama ante tan ni.
 
 Your language has been set to {language}.

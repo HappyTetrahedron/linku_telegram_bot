@@ -68,8 +68,12 @@ class PollBot:
                 InlineKeyboardButton(v['name_endonym'], callback_data="{}:{}".format(InlineCommands.SETLANGUAGE, k))
             ])
 
+        lang = self.jasima.languages[settings.get('language', 'en')]
         update.message.reply_text(
-            text=messages.preferences_language.format(language=self.jasima.languages[settings.get('language', 'en')]['name_endonym']),
+            text=messages.preferences_language.format(
+                language=lang['name_endonym'],
+                language_tp=lang['name_toki_pona']
+            ),
             parse_mode="Markdown",
             reply_markup=InlineKeyboardMarkup(reply_keyboard)
         )
@@ -154,9 +158,13 @@ class PollBot:
         if command == InlineCommands.SETLANGUAGE:
             self._set_user_language(parts[1], query.from_user.id)
             settings = self._get_user_settings(query.from_user.id)
+            lang = self.jasima.languages[settings.get('language', 'en')]
             context.bot.edit_message_text(
                 **identifier,
-                text=messages.preferences_language_success.format(language=self.jasima.languages[settings.get('language', 'en')]['name_endonym']),
+                text=messages.preferences_language_success.format(
+                    language=lang['name_endonym'],
+                    language_tp=lang['name_toki_pona']
+                ),
                 parse_mode="Markdown",
             )
 
