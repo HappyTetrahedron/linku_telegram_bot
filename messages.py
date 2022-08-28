@@ -12,8 +12,8 @@ Hello! I can give you the definitions of toki pona words.
 Simply text to me: `/n [word]`
 Or in a different chat, you can use `@{botname} [word]`
 You can also change the language of the definitions using /language"""
-definition_compact = '*{word}* ({book})\n\n{definition}'
-definition_extended = '*{word}*{body}'
+definition_compact = '*{word}* ({book}) - {usage}\n\n{definition}'
+definition_extended = '*{word}* ({book}) - {usage}{body}'
 definition_extended_entry = '\n\n*{property}*:\n{value}'
 definition_not_found = """*{word}*
 pakala! mi sona ala e nimi ni.

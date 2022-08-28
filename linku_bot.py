@@ -200,12 +200,15 @@ class PollBot:
                     body += messages.definition_extended_entry.format(property="see also", value=definition['see_also'])
             return messages.definition_extended.format(
                 word=definition['word'],
+                book=definition['book'],
+                usage=definition['usage_category'],
                 body=body,
             )
         return messages.definition_compact.format(
             word=definition['word'],
             book=definition['book'],
-            definition=description
+            definition=description,
+            usage=definition['usage_category']
         )
 
     def _set_user_language(self, language, user_id):
