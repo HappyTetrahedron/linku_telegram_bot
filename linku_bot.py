@@ -186,8 +186,9 @@ class PollBot:
             return messages.definition_not_found.format(word=word)
         settings = self._get_user_settings(user_id)
         lang = settings.get('language', 'en')
+        description = definition['def'].get(lang, definition['def']['en'])
         if expand:
-            body = messages.definition_extended_entry.format(property="description", value=definition['def'][lang])
+            body = messages.definition_extended_entry.format(property="description", value=description)
             if 'etymology' in definition or 'source_language' in definition:
                 body += messages.definition_extended_entry.format(property="etymology", value=_build_etymology(definition))
             if 'ku_data' in definition:
@@ -204,7 +205,7 @@ class PollBot:
         return messages.definition_compact.format(
             word=definition['word'],
             book=definition['book'],
-            definition=definition['def'][lang]
+            definition=description
         )
 
     def _set_user_language(self, language, user_id):
