@@ -6,15 +6,17 @@ import dataset
 import telegram
 import yaml
 from telegram import InlineKeyboardButton
-from telegram.constants import CHAT_PRIVATE
+from telegram.constants import ChatType
 from telegram.ext import Updater, CommandHandler, CallbackQueryHandler, MessageHandler
-from telegram.ext.inlinequeryhandler import InlineQueryHandler
-from telegram.inline.inlinekeyboardmarkup import InlineKeyboardMarkup
-from telegram.inline.inlinequeryresultarticle import InlineQueryResultArticle
-from telegram.inline.inputtextmessagecontent import InputTextMessageContent
+from telegram.ext import InlineQueryHandler
+from telegram import InlineKeyboardMarkup
+from telegram import InlineQueryResultArticle
+from telegram import InputTextMessageContent
+from telegram.ext import ApplicationBuilder
 
 import jasima
 import messages
+
 
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
                     level=logging.INFO)
@@ -43,24 +45,25 @@ class PollBot:
         self.jasima = jasima.JasimaCache()
         self.debug = False
         self.me = None
+        self.app = None
 
     # Command handlers:
-    def start(self, update, context):
+    async def start(self, update, context):
         """Send a message when the command /start is issued."""
-        update.message.reply_text(messages.hello)
+        await update.message.reply_text(messages.hello)
 
-    def handle_nimi(self, update, context):
+    async def handle_nimi(self, update, context):
         command = update.message.text
         parts = command.split()
         nimi = parts[1].lower()
 
-        update.message.reply_text(
+        await update.message.reply_text(
             text=self._get_definition_for_user(nimi, update.message.from_user.id),
             parse_mode="Markdown",
             reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("show more", callback_data="{}:{}:{}".format(InlineCommands.EXPAND, nimi, update.message.from_user.id))]])
         )
 
-    def handle_language(self, update, context):
+    async def handle_language(self, update, context):
         reply_keyboard = []
         settings = self._get_user_settings(update.message.from_user.id)
         for (k, v) in self.jasima.languages.items():
@@ -69,7 +72,7 @@ class PollBot:
             ])
 
         lang = self.jasima.languages[settings.get('language', 'en')]
-        update.message.reply_text(
+        await update.message.reply_text(
             text=messages.preferences_language.format(
                 language=lang['name_endonym'],
                 language_tp=lang['name_toki_pona']
@@ -79,13 +82,17 @@ class PollBot:
         )
 
     # Inline query handler
-    def handle_inline_query(self, update, context):
+    async def handle_inline_query(self, update, context):
+        logger.info("NOW GETTING QUERY " + update.inline_query.query)
         query = update.inline_query.query.lower()
+        logger.info("JASIMA START GETTING QUERY " + update.inline_query.query)
         results = self.jasima.get_by_prefix(query)
+        logger.info("JASIMA DONE GETTING QUERY " + update.inline_query.query)
 
         inline_results = []
 
         for word in sorted(results)[:5]:
+            logger.info("SEME THE FUCK")
             inline_results.append(
                 InlineQueryResultArticle(
                     id=word,
@@ -103,21 +110,22 @@ class PollBot:
                                                                                  update.inline_query.from_user.id))]])
                 ),
             )
-        update.inline_query.answer(inline_results)
+        logger.info("DONE PROCESSING QUERY " + update.inline_query.query)
+        await update.inline_query.answer(inline_results)
 
     # Message handler
-    def handle_message(self, update, context):
-        if update.message.chat.type == CHAT_PRIVATE:
+    async def handle_message(self, update, context):
+        if update.message.chat.type == ChatType.PRIVATE:
             nimi = update.message.text.lower()
             if self.jasima.get_word_entry(nimi):
-                update.message.reply_text(
+                await update.message.reply_text(
                     text=self._get_definition_for_user(nimi, update.message.from_user.id),
                     parse_mode="Markdown",
                     reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("show more", callback_data="{}:{}:{}".format(InlineCommands.EXPAND, nimi, update.message.from_user.id))]])
                 )
 
     # Inline button press handler
-    def handle_button(self, update, context):
+    async def handle_button(self, update, context):
         query = update.callback_query
         data = update.callback_query.data
         parts = data.split(':', 1)
@@ -135,7 +143,7 @@ class PollBot:
 
         if command == InlineCommands.EXPAND:
             arguments = arg_string.split(':', 1)
-            context.bot.edit_message_text(
+            await context.bot.edit_message_text(
                 **identifier,
                 text=self._get_definition_for_user(arguments[0], arguments[1], expand=True),
                 parse_mode="Markdown",
@@ -146,7 +154,7 @@ class PollBot:
             )
         if command == InlineCommands.CONTRACT:
             arguments = arg_string.split(':', 1)
-            context.bot.edit_message_text(
+            await context.bot.edit_message_text(
                 **identifier,
                 text=self._get_definition_for_user(arguments[0], arguments[1], expand=False),
                 parse_mode="Markdown",
@@ -159,7 +167,7 @@ class PollBot:
             self._set_user_language(parts[1], query.from_user.id)
             settings = self._get_user_settings(query.from_user.id)
             lang = self.jasima.languages[settings.get('language', 'en')]
-            context.bot.edit_message_text(
+            await context.bot.edit_message_text(
                 **identifier,
                 text=messages.preferences_language_success.format(
                     language=lang['name_endonym'],
@@ -168,19 +176,21 @@ class PollBot:
                 parse_mode="Markdown",
             )
 
-        query.answer("Done!")
+        await query.answer("Done!")
 
 # Help command handler
-    def handle_help(self, update, context):
+    async def handle_help(self, update, context):
         print(self.me)
-        update.message.reply_text(messages.help_text.format(botname=self.me['username']), parse_mode="Markdown")
+        if not self.me:
+            self.me = await self.app.bot.get_me()
+        await update.message.reply_text(messages.help_text.format(botname=self.me['username']), parse_mode="Markdown")
 
-    def handle_about(self, update, context):
+    async def handle_about(self, update, context):
         print(self.me)
-        update.message.reply_text(messages.about, parse_mode="MarkdownV2")
+        await update.message.reply_text(messages.about, parse_mode="MarkdownV2")
 
     # Error handler
-    def handle_error(self, update, context):
+    async def handle_error(self, update, context):
         """Log Errors caused by Updates."""
         logger.warning('Update "%s" caused error "%s"', update, context.error)
         if self.debug:
@@ -253,11 +263,9 @@ class PollBot:
         self.db = dataset.connect('sqlite:///{}'.format(config['db']))
 
         """Start the bot."""
-        # Create the EventHandler and pass it your bot's token.
-        updater = Updater(config['token'])
+        dp = ApplicationBuilder().token(config['token']).concurrent_updates(True).build()
+        self.app = dp
 
-        # Get the dispatcher to register handlers
-        dp = updater.dispatcher
         # on different commands - answer in Telegram
         dp.add_handler(CommandHandler("start", self.start))
         dp.add_handler(CommandHandler("help", self.handle_help))
@@ -279,15 +287,13 @@ class PollBot:
         # log all errors
         dp.add_error_handler(self.handle_error)
 
-        self.me = updater.bot.get_me()
-
         # Start the Bot
-        updater.start_polling()
+        dp.run_polling()
 
         # Run the bot until you press Ctrl-C or the process receives SIGINT,
         # SIGTERM or SIGABRT. This should be used most of the time, since
         # start_polling() is non-blocking and will stop the bot gracefully.
-        updater.idle()
+        # updater.idle()
 
 
 def main(opts):
