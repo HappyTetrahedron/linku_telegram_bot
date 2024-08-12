@@ -30,12 +30,11 @@ class InlineCommands:
     SETLANGUAGE = 'SL'
 
 
-def _build_etymology(definition):
-    etymology = "←"
-    if "source_language" in definition:
-        etymology += " " + definition["source_language"]
+def _build_etymology(definition, translation):
+    etymology = ""
     if "etymology" in definition:
-        etymology += " " + definition["etymology"]
+        for i, en in enumerate(definition["etymology"]):
+            etymology += " ← {} {}".format(translation['etymology'][i]["language"], definition['etymology'][i]["word"])
     return etymology
 
 
@@ -68,14 +67,14 @@ class PollBot:
         settings = self._get_user_settings(update.message.from_user.id)
         for (k, v) in self.jasima.languages.items():
             reply_keyboard.append([
-                InlineKeyboardButton(v['name_endonym'], callback_data="{}:{}".format(InlineCommands.SETLANGUAGE, k))
+                InlineKeyboardButton(v['name']['endonym'], callback_data="{}:{}".format(InlineCommands.SETLANGUAGE, k))
             ])
 
-        lang = self.jasima.languages[settings.get('language', 'en')]
+        lang = self.jasima.languages[settings.get('language', jasima.DEFAULT_LANGUAGE)]
         await update.message.reply_text(
             text=messages.preferences_language.format(
-                language=lang['name_endonym'],
-                language_tp=lang['name_toki_pona']
+                language=lang['name']['endonym'],
+                language_tp=lang['name']['tok']
             ),
             parse_mode="Markdown",
             reply_markup=InlineKeyboardMarkup(reply_keyboard)
@@ -86,13 +85,12 @@ class PollBot:
         logger.info("NOW GETTING QUERY " + update.inline_query.query)
         query = update.inline_query.query.lower()
         logger.info("JASIMA START GETTING QUERY " + update.inline_query.query)
-        results = self.jasima.get_by_prefix(query)
+        results = self.jasima.get_by_prefix(query, jasima.DEFAULT_LANGUAGE)
         logger.info("JASIMA DONE GETTING QUERY " + update.inline_query.query)
 
         inline_results = []
 
         for word in sorted(results)[:5]:
-            logger.info("SEME THE FUCK")
             inline_results.append(
                 InlineQueryResultArticle(
                     id=word,
@@ -166,12 +164,12 @@ class PollBot:
         if command == InlineCommands.SETLANGUAGE:
             self._set_user_language(parts[1], query.from_user.id)
             settings = self._get_user_settings(query.from_user.id)
-            lang = self.jasima.languages[settings.get('language', 'en')]
+            lang = self.jasima.languages[settings.get('language', jasima.DEFAULT_LANGUAGE)]
             await context.bot.edit_message_text(
                 **identifier,
                 text=messages.preferences_language_success.format(
-                    language=lang['name_endonym'],
-                    language_tp=lang['name_toki_pona']
+                    language=lang['name']['endonym'],
+                    language_tp=lang['name']['tok']
                 ),
                 parse_mode="Markdown",
             )
@@ -199,33 +197,34 @@ class PollBot:
 
     # Helper methods
     def _get_definition_for_user(self, word, user_id, expand=False):
-        definition = self.jasima.get_word_entry(word)
+        settings = self._get_user_settings(user_id)
+        lang = settings.get('language', jasima.DEFAULT_LANGUAGE)
+        definition = self.jasima.get_word_entry(word, lang)
         if not definition:
             return messages.definition_not_found.format(word=word)
-        settings = self._get_user_settings(user_id)
-        lang = settings.get('language', 'en')
-        description = definition['def'].get(lang, definition['def']['en'])
+
+        translation = definition["translations"][lang]
         if expand:
-            body = messages.definition_extended_entry.format(property="description", value=description)
-            if 'etymology' in definition or 'source_language' in definition:
-                body += messages.definition_extended_entry.format(property="etymology", value=_build_etymology(definition))
-            if 'ku_data' in definition:
-                body += messages.definition_extended_entry.format(property="ku data", value=definition['ku_data'])
-            if 'commentary' in definition:
-                body += messages.definition_extended_entry.format(property="commentary", value=definition['commentary'])
+            body = messages.definition_extended_entry.format(property="description", value=translation["definition"])
+            if 'etymology' in translation:
+                body += messages.definition_extended_entry.format(property="etymology", value=_build_etymology(definition, translation))
+            # if 'ku_data' in definition:
+            #     body += messages.definition_extended_entry.format(property="ku data", value=definition['ku_data'])
+            if 'commentary' in translation:
+                body += messages.definition_extended_entry.format(property="commentary", value=translation['commentary'])
             if definition['book'] not in ('pu', 'ku suli'):
                 if 'see_also' in definition:
-                    body += messages.definition_extended_entry.format(property="see also", value=definition['see_also'])
+                    body += messages.definition_extended_entry.format(property="see also", value=", ".join(definition['see_also']))
             return messages.definition_extended.format(
-                word=definition['word'],
+                word=definition['id'],
                 book=definition['book'],
                 usage=definition['usage_category'],
                 body=body,
             )
         return messages.definition_compact.format(
-            word=definition['word'],
+            word=definition['id'],
             book=definition['book'],
-            definition=description,
+            definition=translation['definition'],
             usage=definition['usage_category']
         )
 
