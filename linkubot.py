@@ -94,7 +94,7 @@ class PollBot:
             inline_results.append(
                 InlineQueryResultArticle(
                     id=word,
-                    title=word,
+                    title=word + (" (very obscure)" if results[word]["usage_category"] == "sandbox" else ""),
                     input_message_content=InputTextMessageContent(
                         parse_mode='Markdown',
                         message_text=self._get_definition_for_user(
