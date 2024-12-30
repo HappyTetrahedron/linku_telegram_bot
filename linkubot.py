@@ -67,7 +67,7 @@ class PollBot:
         settings = self._get_user_settings(update.message.from_user.id)
         for (k, v) in self.jasima.languages.items():
             reply_keyboard.append([
-                InlineKeyboardButton(v['name']['endonym'], callback_data="{}:{}".format(InlineCommands.SETLANGUAGE, k))
+                InlineKeyboardButton(v['name'].get('endonym', v['name']['en']), callback_data="{}:{}".format(InlineCommands.SETLANGUAGE, k))
             ])
 
         lang = self.jasima.languages[settings.get('language', jasima.DEFAULT_LANGUAGE)]
